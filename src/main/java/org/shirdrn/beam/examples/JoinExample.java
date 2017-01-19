@@ -59,28 +59,28 @@ public class JoinExample {
 		final TupleTag<String> idInfoTag = new TupleTag<String>();
 	    final TupleTag<String> opInfoTag = new TupleTag<String>();
 	    
-		final PCollection<KV<String, CoGbkResult>> coGrouppedCollection = KeyedPCollectionTuple
+		final PCollection<KV<String, CoGbkResult>> cogrouppedCollection = KeyedPCollectionTuple
 		        .of(idInfoTag, idInfoCollection)
 		        .and(opInfoTag, opCollection)
 		        .apply(CoGroupByKey.<String>create());
 		
-		final PCollection<KV<String, String>> finalResultCollection = coGrouppedCollection
-				.apply("", ParDo.of(new DoFn<KV<String, CoGbkResult>, KV<String, String>>() {
+		final PCollection<KV<String, String>> finalResultCollection = cogrouppedCollection
+				.apply("CreateJoinedIdAndOpInfoPairs", ParDo.of(new DoFn<KV<String, CoGbkResult>, KV<String, String>>() {
 			
 				@ProcessElement
 				public void processElement(ProcessContext c) {
 					KV<String, CoGbkResult> e = c.element();
 		            String id = e.getKey();
 		            String name = e.getValue().getOnly(idInfoTag);
-		            for (String eventInfo : c.element().getValue().getAll(opInfoTag)) {
+		            for (String opInfo : c.element().getValue().getAll(opInfoTag)) {
 		              // Generate a string that combines information from both collection values
-		              c.output(KV.of(id, "\t" + name + "\t" + eventInfo));
+		              c.output(KV.of(id, "\t" + name + "\t" + opInfo));
 		            }
 				}
 		}));
 		
 		PCollection<String> formattedResults = finalResultCollection
-		        .apply("Format", ParDo.of(new DoFn<KV<String, String>, String>() {
+		        .apply("FormatFinalResults", ParDo.of(new DoFn<KV<String, String>, String>() {
 		          @ProcessElement
 		          public void processElement(ProcessContext c) {
 		            c.output(c.element().getKey() + "\t" + c.element().getValue());
